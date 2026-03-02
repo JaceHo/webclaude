@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Bot,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface ToolUseBlockProps {
   name: string;
@@ -35,24 +34,17 @@ export function ToolUseBlock({ name, input }: ToolUseBlockProps) {
   const Icon = TOOL_ICONS[name] || Terminal;
   const inp = input as Record<string, unknown>;
 
-  // Smart summary based on tool type
   let summary = "";
   switch (name) {
     case "Bash":
       summary = (inp.command as string) || "";
       break;
     case "Read":
-      summary = (inp.file_path as string) || "";
-      break;
     case "Edit":
-      summary = (inp.file_path as string) || "";
-      break;
     case "Write":
       summary = (inp.file_path as string) || "";
       break;
     case "Glob":
-      summary = (inp.pattern as string) || "";
-      break;
     case "Grep":
       summary = (inp.pattern as string) || "";
       break;
@@ -70,25 +62,25 @@ export function ToolUseBlock({ name, input }: ToolUseBlockProps) {
   }
 
   return (
-    <div className="border border-border rounded-lg bg-bg-secondary overflow-hidden">
+    <div className="rounded-lg bg-bg-secondary border border-border/60 overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-bg-hover transition-colors"
+        className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-bg-hover/50 transition-colors"
       >
-        <Icon size={14} className="text-accent flex-shrink-0" />
+        <Icon size={13} className="text-accent/80 flex-shrink-0" />
         <span className="font-mono font-medium text-text-primary">{name}</span>
         <span className="text-text-muted truncate flex-1 text-left font-mono">
           {summary}
         </span>
         {expanded ? (
-          <ChevronDown size={14} className="text-text-muted" />
+          <ChevronDown size={12} className="text-text-muted flex-shrink-0" />
         ) : (
-          <ChevronRight size={14} className="text-text-muted" />
+          <ChevronRight size={12} className="text-text-muted flex-shrink-0" />
         )}
       </button>
       {expanded && (
-        <div className="px-3 pb-3 border-t border-border">
-          <pre className="text-xs text-text-secondary mt-2 whitespace-pre-wrap overflow-x-auto">
+        <div className="px-3 pb-3 border-t border-border/40">
+          <pre className="text-xs text-text-secondary mt-2 whitespace-pre-wrap overflow-x-auto leading-relaxed">
             {JSON.stringify(input, null, 2)}
           </pre>
         </div>

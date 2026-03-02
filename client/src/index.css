@@ -2,19 +2,19 @@
 @import "highlight.js/styles/github-dark.css";
 
 @theme {
-  --color-bg-primary: #0f0f0f;
-  --color-bg-secondary: #1a1a1a;
-  --color-bg-tertiary: #252525;
-  --color-bg-hover: #2a2a2a;
-  --color-border: #333333;
-  --color-border-light: #444444;
-  --color-text-primary: #e5e5e5;
-  --color-text-secondary: #a0a0a0;
-  --color-text-muted: #666666;
-  --color-accent: #d4a574;
-  --color-accent-hover: #e0b88a;
-  --color-user-bubble: #2a4a6b;
-  --color-thinking: #3d3520;
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #111111;
+  --color-bg-tertiary: #1a1a1a;
+  --color-bg-hover: #222222;
+  --color-bg-user: #1c1c1c;
+  --color-border: #2a2a2a;
+  --color-border-light: #3a3a3a;
+  --color-text-primary: #ececec;
+  --color-text-secondary: #a8a8a8;
+  --color-text-muted: #5a5a5a;
+  --color-accent: #c9956b;
+  --color-accent-hover: #daa87e;
+  --color-thinking: #332b1a;
   --color-error: #7f1d1d;
   --color-success: #14532d;
   --color-running: #d97706;
@@ -25,29 +25,23 @@ html, body, #root {
   margin: 0;
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-light);
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-border-light); }
 
-/* Code block styling */
+/* Code blocks */
 pre code.hljs {
   background: var(--color-bg-primary) !important;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 1rem !important;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
 }
 
 /* Streaming cursor */
@@ -56,17 +50,27 @@ pre code.hljs {
   50% { opacity: 0; }
 }
 .streaming-cursor::after {
-  content: "\25A0";
+  content: "\25AE";
   animation: blink 1s step-end infinite;
   color: var(--color-accent);
-  margin-left: 2px;
+  margin-left: 1px;
+  font-size: 0.85em;
 }
 
-/* Pulse animation for running sessions */
+/* Pulse for running sessions */
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
 .pulse-dot {
   animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* Smooth message appearance */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.msg-enter {
+  animation: fade-up 0.2s ease-out;
 }

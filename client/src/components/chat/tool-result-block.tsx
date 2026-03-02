@@ -16,29 +16,29 @@ export function ToolResultBlock({ content, isError }: ToolResultBlockProps) {
   return (
     <div
       className={cn(
-        "border rounded-lg overflow-hidden text-xs",
+        "rounded-lg overflow-hidden text-xs",
         isError
-          ? "border-red-800/50 bg-error/20"
-          : "border-border bg-bg-primary/50",
+          ? "border border-red-800/40 bg-error/15"
+          : "border border-border/40 bg-bg-primary/40",
       )}
     >
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-bg-hover/50 transition-colors"
+        className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-bg-hover/30 transition-colors"
       >
         {isError ? (
-          <AlertCircle size={12} className="text-red-400" />
+          <AlertCircle size={11} className="text-red-400/80" />
         ) : (
-          <CheckCircle size={12} className="text-green-500" />
+          <CheckCircle size={11} className="text-green-500/70" />
         )}
         <span className="text-text-muted">
           {isError ? "Error" : "Output"}
           {isLong && ` (${content.length} chars)`}
         </span>
-        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        {expanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
       </button>
       {expanded && (
-        <pre className="px-3 pb-2 text-text-secondary whitespace-pre-wrap break-words overflow-x-auto max-h-96 overflow-y-auto">
+        <pre className="px-3 pb-2 text-text-secondary whitespace-pre-wrap break-words overflow-x-auto max-h-80 overflow-y-auto leading-relaxed">
           {content}
         </pre>
       )}

@@ -21,14 +21,12 @@ export function ChatContainer({ messages, streaming }: ChatContainerProps) {
     }
   };
 
-  // Auto-scroll during streaming
   useEffect(() => {
     if (streaming && !userScrolledUp.current) {
       scrollToBottom();
     }
   }, [messages, streaming]);
 
-  // Track user scroll
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -45,9 +43,8 @@ export function ChatContainer({ messages, streaming }: ChatContainerProps) {
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-text-muted">
-        <div className="text-center">
-          <p className="text-lg mb-1">Start a conversation</p>
-          <p className="text-sm">Send a message to begin</p>
+        <div className="text-center space-y-1">
+          <p className="text-lg font-light">What can I help you with?</p>
         </div>
       </div>
     );
@@ -55,16 +52,16 @@ export function ChatContainer({ messages, streaming }: ChatContainerProps) {
 
   return (
     <div className="flex-1 overflow-y-auto relative" ref={containerRef}>
-      <div className="max-w-4xl mx-auto px-4 py-4">
+      <div className="max-w-3xl mx-auto px-6 py-6">
         <ChatMessages messages={messages} streaming={streaming} />
       </div>
 
       {showScrollBtn && (
         <button
           onClick={scrollToBottom}
-          className="absolute bottom-4 right-4 p-2 rounded-full bg-bg-tertiary border border-border text-text-secondary hover:text-text-primary shadow-lg"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 p-2 rounded-full bg-bg-tertiary/90 border border-border text-text-secondary hover:text-text-primary backdrop-blur-sm transition-all hover:scale-105"
         >
-          <ArrowDown size={16} />
+          <ArrowDown size={14} />
         </button>
       )}
     </div>

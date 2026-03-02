@@ -20,7 +20,6 @@ export function ChatInput({
   const [images, setImages] = useState<ImageData[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -28,7 +27,6 @@ export function ChatInput({
     el.style.height = Math.min(el.scrollHeight, 200) + "px";
   }, [text]);
 
-  // Focus on mount
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
@@ -60,10 +58,7 @@ export function ChatInput({
           const base64 = (reader.result as string).split(",")[1];
           setImages((prev) => [
             ...prev,
-            {
-              base64,
-              mediaType: file.type as ImageData["mediaType"],
-            },
+            { base64, mediaType: file.type as ImageData["mediaType"] },
           ]);
         };
         reader.readAsDataURL(file);
@@ -92,9 +87,8 @@ export function ChatInput({
   };
 
   return (
-    <div className="border-t border-border bg-bg-secondary px-4 py-3">
-      <div className="max-w-4xl mx-auto">
-        {/* Image previews */}
+    <div className="bg-bg-primary px-4 pb-4 pt-2">
+      <div className="max-w-3xl mx-auto">
         {images.length > 0 && (
           <div className="flex gap-2 mb-2 flex-wrap">
             {images.map((img, i) => (
@@ -102,11 +96,11 @@ export function ChatInput({
                 <img
                   src={`data:${img.mediaType};base64,${img.base64}`}
                   alt="Upload"
-                  className="h-16 w-16 object-cover rounded-lg border border-border"
+                  className="h-14 w-14 object-cover rounded-lg border border-border"
                 />
                 <button
                   onClick={() => removeImage(i)}
-                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   x
                 </button>
@@ -116,11 +110,11 @@ export function ChatInput({
         )}
 
         <div
-          className="flex items-end gap-2 rounded-xl bg-bg-tertiary border border-border px-3 py-2"
+          className="flex items-end gap-2 rounded-2xl bg-bg-secondary border border-border px-4 py-3 focus-within:border-border-light transition-colors"
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
         >
-          <label className="cursor-pointer p-1 text-text-muted hover:text-text-secondary">
+          <label className="cursor-pointer p-0.5 text-text-muted hover:text-text-secondary transition-colors">
             <ImagePlus size={18} />
             <input
               type="file"
@@ -150,37 +144,33 @@ export function ChatInput({
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder="Send a message..."
+            placeholder="Message..."
             rows={1}
-            className="flex-1 bg-transparent resize-none text-sm focus:outline-none placeholder:text-text-muted min-h-[24px] max-h-[200px] py-0.5"
+            className="flex-1 bg-transparent resize-none text-[0.9rem] focus:outline-none placeholder:text-text-muted min-h-[24px] max-h-[200px] py-0.5 leading-relaxed"
             disabled={disabled}
           />
 
           {streaming ? (
             <button
               onClick={onInterrupt}
-              className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+              className="p-1.5 rounded-lg text-text-muted hover:text-red-400 transition-colors"
             >
-              <Square size={16} />
+              <Square size={18} />
             </button>
           ) : (
             <button
               onClick={handleSubmit}
               disabled={!text.trim() || disabled}
               className={cn(
-                "p-1.5 rounded-lg transition-colors",
+                "p-1.5 rounded-lg transition-all",
                 text.trim() && !disabled
-                  ? "bg-accent text-bg-primary hover:bg-accent-hover"
-                  : "text-text-muted",
+                  ? "text-accent hover:text-accent-hover"
+                  : "text-text-muted/40",
               )}
             >
-              <Send size={16} />
+              <Send size={18} />
             </button>
           )}
-        </div>
-
-        <div className="text-xs text-text-muted mt-1.5 text-center">
-          Enter to send, Shift+Enter for newline
         </div>
       </div>
     </div>

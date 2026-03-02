@@ -12,19 +12,19 @@ interface HeaderProps {
 export function Header({ session, onModelChange }: HeaderProps) {
   if (!session) {
     return (
-      <header className="h-12 border-b border-border bg-bg-secondary flex items-center px-4">
+      <header className="h-11 border-b border-border bg-bg-primary flex items-center px-4">
         <span className="text-text-muted text-sm">
-          Select or create a session to start
+          Select or create a session
         </span>
       </header>
     );
   }
 
   return (
-    <header className="h-12 border-b border-border bg-bg-secondary flex items-center px-4 gap-3">
+    <header className="h-11 border-b border-border bg-bg-primary flex items-center px-4 gap-3">
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <Circle
-          size={8}
+          size={7}
           className={cn(
             "flex-shrink-0",
             session.status === "running" && "fill-running text-running pulse-dot",
@@ -32,13 +32,13 @@ export function Header({ session, onModelChange }: HeaderProps) {
             session.status === "error" && "fill-red-500 text-red-500",
           )}
         />
-        <h1 className="text-sm font-medium truncate">{session.title}</h1>
+        <h1 className="text-sm font-medium truncate text-text-primary">{session.title}</h1>
       </div>
 
       <ModelSelector value={session.model} onChange={onModelChange} />
 
       {session.totalCost > 0 && (
-        <span className="text-xs text-text-muted">
+        <span className="text-[11px] text-text-muted font-mono">
           {formatCost(session.totalCost)}
         </span>
       )}

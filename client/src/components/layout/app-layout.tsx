@@ -9,10 +9,10 @@ export function AppLayout({
 }) {
   return (
     <div className="flex h-full">
-      <aside className="w-[280px] flex-shrink-0 border-r border-border bg-bg-secondary flex flex-col">
+      <aside className="w-[260px] flex-shrink-0 border-r border-border bg-bg-secondary flex flex-col">
         {sidebar}
       </aside>
-      <main className="flex-1 flex flex-col min-w-0">{children}</main>
+      <main className="flex-1 flex flex-col min-w-0 bg-bg-primary">{children}</main>
     </div>
   );
 }

@@ -22,9 +22,9 @@ export function Sidebar({
       <div className="p-3 border-b border-border">
         <button
           onClick={() => onCreateSession({})}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-bg-tertiary hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors text-sm"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors text-sm"
         >
-          <Plus size={16} />
+          <Plus size={15} />
           New Session
         </button>
       </div>
@@ -36,7 +36,7 @@ export function Sidebar({
           onDelete={onDeleteSession}
         />
       </div>
-      <div className="p-3 border-t border-border text-xs text-text-muted text-center">
+      <div className="p-2.5 border-t border-border text-[11px] text-text-muted text-center font-light tracking-wide">
         WebClaude
       </div>
     </>

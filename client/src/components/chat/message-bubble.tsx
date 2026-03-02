@@ -1,10 +1,10 @@
 import type { ChatMessage, ContentBlock } from "@/hooks/use-chat";
+import { cn } from "@/lib/utils";
 import { TextBlock } from "./text-block";
 import { ThinkingBlock } from "./thinking-block";
 import { ToolUseBlock } from "./tool-use-block";
 import { ToolResultBlock } from "./tool-result-block";
 import { ImageBlock } from "./image-block";
-import { Bot } from "lucide-react";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -20,10 +20,9 @@ export function MessageBubble({
   const isUser = message.role === "user";
 
   if (isUser) {
-    // User messages: plain text, right-aligned, no bubble/icon
     return (
-      <div className="flex justify-end">
-        <div className="max-w-[80%] text-text-secondary text-right whitespace-pre-wrap">
+      <div className="flex justify-end msg-enter">
+        <div className="max-w-[75%] px-4 py-2.5 rounded-2xl rounded-br-md bg-bg-user border border-border/60 text-text-primary text-[0.9rem] leading-relaxed whitespace-pre-wrap">
           {message.blocks.map((block, i) =>
             block.type === "text" ? (
               <span key={i}>{block.text}</span>
@@ -40,12 +39,8 @@ export function MessageBubble({
   }
 
   return (
-    <div className="flex gap-3 flex-row">
-      <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mt-0.5 bg-bg-tertiary">
-        <Bot size={14} />
-      </div>
-
-      <div className="flex-1 min-w-0 space-y-2">
+    <div className="msg-enter">
+      <div className="space-y-2">
         {message.blocks.map((block, i) => (
           <BlockRenderer
             key={i}
@@ -54,9 +49,8 @@ export function MessageBubble({
           />
         ))}
 
-        {/* Subagent / child messages */}
         {childMessages.length > 0 && (
-          <div className="ml-4 pl-3 border-l-2 border-border space-y-2">
+          <div className="ml-3 pl-3 border-l border-border/50 space-y-2">
             {childMessages.map((child) => (
               <MessageBubble
                 key={child.id}

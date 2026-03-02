@@ -14,14 +14,14 @@ export function TextBlock({ text, isStreaming }: TextBlockProps) {
   if (!text) return null;
 
   return (
-    <div className={cn("prose-custom", isStreaming && "streaming-cursor")}>
+    <div className={cn("text-[0.9rem] leading-[1.7]", isStreaming && "streaming-cursor")}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight]}
         components={{
           pre({ children, ...props }) {
             return (
-              <div className="relative group">
+              <div className="relative group my-3">
                 <CopyButton content={getCodeContent(children)} />
                 <pre {...props}>{children}</pre>
               </div>
@@ -32,7 +32,7 @@ export function TextBlock({ text, isStreaming }: TextBlockProps) {
             if (isInline) {
               return (
                 <code
-                  className="px-1.5 py-0.5 rounded bg-bg-tertiary text-accent text-sm"
+                  className="px-1.5 py-0.5 rounded-md bg-bg-tertiary text-accent text-[0.82rem] font-mono"
                   {...props}
                 >
                   {children}
@@ -46,13 +46,16 @@ export function TextBlock({ text, isStreaming }: TextBlockProps) {
             );
           },
           p({ children }) {
-            return <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>;
+            return <p className="mb-3 last:mb-0">{children}</p>;
           },
           ul({ children }) {
-            return <ul className="list-disc pl-5 mb-2 space-y-1">{children}</ul>;
+            return <ul className="list-disc pl-5 mb-3 space-y-1">{children}</ul>;
           },
           ol({ children }) {
-            return <ol className="list-decimal pl-5 mb-2 space-y-1">{children}</ol>;
+            return <ol className="list-decimal pl-5 mb-3 space-y-1">{children}</ol>;
+          },
+          li({ children }) {
+            return <li className="leading-[1.6]">{children}</li>;
           },
           a({ href, children }) {
             return (
@@ -60,31 +63,53 @@ export function TextBlock({ text, isStreaming }: TextBlockProps) {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-accent hover:underline"
+                className="text-accent underline underline-offset-2 decoration-accent/40 hover:decoration-accent transition-colors"
               >
                 {children}
               </a>
             );
           },
+          blockquote({ children }) {
+            return (
+              <blockquote className="border-l-2 border-accent/40 pl-4 my-3 text-text-secondary italic">
+                {children}
+              </blockquote>
+            );
+          },
+          h1({ children }) {
+            return <h1 className="text-xl font-semibold mt-5 mb-2">{children}</h1>;
+          },
+          h2({ children }) {
+            return <h2 className="text-lg font-semibold mt-4 mb-2">{children}</h2>;
+          },
+          h3({ children }) {
+            return <h3 className="text-base font-semibold mt-3 mb-1.5">{children}</h3>;
+          },
+          hr() {
+            return <hr className="border-border my-4" />;
+          },
           table({ children }) {
             return (
-              <div className="overflow-x-auto mb-2">
-                <table className="border-collapse border border-border text-sm">
+              <div className="overflow-x-auto my-3 rounded-lg border border-border">
+                <table className="w-full border-collapse text-sm">
                   {children}
                 </table>
               </div>
             );
           },
+          thead({ children }) {
+            return <thead className="bg-bg-tertiary">{children}</thead>;
+          },
           th({ children }) {
             return (
-              <th className="border border-border px-3 py-1.5 bg-bg-tertiary text-left font-medium">
+              <th className="px-3 py-2 text-left font-medium text-text-secondary border-b border-border">
                 {children}
               </th>
             );
           },
           td({ children }) {
             return (
-              <td className="border border-border px-3 py-1.5">{children}</td>
+              <td className="px-3 py-2 border-b border-border/50">{children}</td>
             );
           },
         }}
@@ -107,9 +132,9 @@ function CopyButton({ content }: { content: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-2 right-2 p-1.5 rounded bg-bg-secondary/80 opacity-0 group-hover:opacity-100 transition-opacity text-text-muted hover:text-text-primary"
+      className="absolute top-2.5 right-2.5 p-1.5 rounded-md bg-bg-secondary/80 opacity-0 group-hover:opacity-100 transition-opacity text-text-muted hover:text-text-primary"
     >
-      {copied ? <Check size={14} /> : <Copy size={14} />}
+      {copied ? <Check size={13} /> : <Copy size={13} />}
     </button>
   );
 }

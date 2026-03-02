@@ -7,11 +7,10 @@ interface ChatMessagesProps {
 }
 
 export function ChatMessages({ messages, streaming }: ChatMessagesProps) {
-  // Filter to top-level messages (no parent tool use)
   const topLevel = messages.filter((m) => m.parentToolUseId === null);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {topLevel.map((msg, i) => {
         const isLast =
           i === topLevel.length - 1 && msg.role === "assistant";
