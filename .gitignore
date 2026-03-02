@@ -1,7 +1,33 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
-.vite/
-data/
 *.tsbuildinfo
+
+# Vite
+.vite/
+
+# Persistent data (user-specific)
+data/
+
+# Environment
 .env
+.env.local
+.env.*.local
+
+# OS
 .DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Debug logs
+*.log
+
+# Test artifacts
+test-*.mjs

@@ -1,6 +1,23 @@
 {
   "name": "webclaude",
+  "version": "0.1.0",
+  "description": "Self-hosted web UI for running Claude as an autonomous coding agent",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JaceHo/webclaude.git"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "agent",
+    "ai",
+    "coding-assistant",
+    "web-ui",
+    "claude-agent-sdk",
+    "anthropic"
+  ],
   "workspaces": ["shared", "server", "client"],
   "scripts": {
     "dev": "concurrently \"bun run dev:server\" \"bun run dev:client\"",
@@ -12,5 +29,8 @@
   "devDependencies": {
     "concurrently": "^9.1.0",
     "typescript": "^5.7.0"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
   }
 }
