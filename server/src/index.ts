@@ -1,3 +1,10 @@
+// Strip Claude Code env vars BEFORE any imports that might spawn subprocesses.
+// The SDK inherits process.env when spawning `claude` CLI — if CLAUDECODE=1
+// is set (e.g. when server is started from within Claude Code), the subprocess
+// refuses to start with "cannot be launched inside another Claude Code session".
+delete process.env.CLAUDECODE;
+delete process.env.CLAUDE_CODE_ENTRYPOINT;
+
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { ServerWebSocket } from "bun";
