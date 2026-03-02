@@ -86,7 +86,10 @@ Switch between Claude models on the fly — per session:
 Paste images from clipboard, drag-and-drop files, or use the file picker. Images are sent to Claude for visual analysis and coding tasks.
 
 ### Persistent Storage
-Sessions and message history are saved to disk. Close your browser, restart the server — everything is still there when you come back.
+Sessions and message history are saved to disk (`data/sessions.json` + `data/messages/{id}.json`). Close your browser, restart the server — everything is still there when you come back.
+
+### Resilient Agent Runner
+If the Claude Code subprocess crashes, WebClaude automatically retries up to 3 times with exponential backoff. Each retry uses a fresh SDK session and falls back to a simpler prompt mode. Non-retryable errors (auth, permissions) fail immediately. Sessions auto-recover to idle after errors so you can send new queries without refreshing.
 
 ## Architecture
 
@@ -154,6 +157,10 @@ New sessions default to the `webclaude/` project directory. Change the working d
 ### Permissions
 
 WebClaude runs with `bypassPermissions` mode — Claude has full tool access without interactive confirmation prompts. This is by design for a self-hosted tool where you control the environment. **Do not expose WebClaude to untrusted networks.**
+
+### Running from Claude Code
+
+If you start the server from within a Claude Code session, WebClaude automatically strips the `CLAUDECODE` environment variable so the Agent SDK subprocess doesn't conflict with the parent session.
 
 ## Development
 
