@@ -7,8 +7,6 @@ import {
   Search,
   FileOutput,
   Globe,
-  ChevronDown,
-  ChevronRight,
   Bot,
 } from "lucide-react";
 
@@ -34,6 +32,7 @@ export function ToolUseBlock({ name, input }: ToolUseBlockProps) {
   const Icon = TOOL_ICONS[name] || Terminal;
   const inp = input as Record<string, unknown>;
 
+  // Extract compact summary
   let summary = "";
   switch (name) {
     case "Bash":
@@ -55,32 +54,31 @@ export function ToolUseBlock({ name, input }: ToolUseBlockProps) {
       summary = (inp.url as string) || "";
       break;
     case "Agent":
-      summary = (inp.description as string) || (inp.prompt as string)?.slice(0, 50) || "";
+      summary = (inp.description as string) || (inp.prompt as string)?.slice(0, 40) || "";
       break;
     default:
-      summary = JSON.stringify(input).slice(0, 80);
+      summary = JSON.stringify(input).slice(0, 60);
   }
 
+  // Truncate summary for display
+  const displaySummary = summary.length > 80 ? summary.slice(0, 80) + "..." : summary;
+
   return (
-    <div className="rounded-lg bg-bg-secondary border border-border/60 overflow-hidden">
+    <div className="my-1.5">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-bg-hover/50 transition-colors"
+        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-bg-tertiary/60 hover:bg-bg-tertiary text-xs transition-colors"
       >
-        <Icon size={13} className="text-accent/80 flex-shrink-0" />
-        <span className="font-mono font-medium text-text-primary">{name}</span>
-        <span className="text-text-muted truncate flex-1 text-left font-mono">
-          {summary}
+        <Icon size={11} className="text-cyan-400/70" />
+        <span className="font-medium text-text-secondary">{name}</span>
+        <span className="text-text-muted truncate max-w-[200px] font-mono">
+          {displaySummary}
         </span>
-        {expanded ? (
-          <ChevronDown size={12} className="text-text-muted flex-shrink-0" />
-        ) : (
-          <ChevronRight size={12} className="text-text-muted flex-shrink-0" />
-        )}
       </button>
+
       {expanded && (
-        <div className="px-3 pb-3 border-t border-border/40">
-          <pre className="text-xs text-text-secondary mt-2 whitespace-pre-wrap overflow-x-auto leading-relaxed">
+        <div className="mt-1 ml-0">
+          <pre className="text-xs text-text-muted bg-bg-tertiary/30 p-2 rounded-md overflow-x-auto font-mono">
             {JSON.stringify(input, null, 2)}
           </pre>
         </div>

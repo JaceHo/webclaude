@@ -1,45 +1,41 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, AlertCircle, CheckCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface ToolResultBlockProps {
   content: string;
   isError?: boolean;
 }
 
-const MAX_PREVIEW = 500;
+const MAX_PREVIEW = 300;
 
 export function ToolResultBlock({ content, isError }: ToolResultBlockProps) {
   const [expanded, setExpanded] = useState(false);
   const isLong = content.length > MAX_PREVIEW;
 
+  // Show first few lines as preview
+  const preview = content.split("\n").slice(0, 3).join("\n");
+  const showPreview = isLong && !expanded;
+
   return (
-    <div
-      className={cn(
-        "rounded-lg overflow-hidden text-xs",
-        isError
-          ? "border border-red-800/40 bg-error/15"
-          : "border border-border/40 bg-bg-primary/40",
-      )}
-    >
+    <div className="my-1 ml-3">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-bg-hover/30 transition-colors"
+        className="flex items-center gap-1.5 text-[10px] text-text-muted hover:text-text-secondary transition-colors"
       >
-        {isError ? (
-          <AlertCircle size={11} className="text-red-400/80" />
-        ) : (
-          <CheckCircle size={11} className="text-green-500/70" />
-        )}
-        <span className="text-text-muted">
-          {isError ? "Error" : "Output"}
-          {isLong && ` (${content.length} chars)`}
+        <span className={isError ? "text-red-400/70" : "text-green-500/70"}>
+          {isError ? "✕ Error" : "✓ Output"}
         </span>
-        {expanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+        {isLong && (
+          <>
+            <span>({content.length} chars)</span>
+            <ChevronDown size={10} className={!expanded ? "rotate-[-90deg]" : ""} />
+          </>
+        )}
       </button>
-      {expanded && (
-        <pre className="px-3 pb-2 text-text-secondary whitespace-pre-wrap break-words overflow-x-auto max-h-80 overflow-y-auto leading-relaxed">
-          {content}
+
+      {(expanded || !isLong) && (
+        <pre className="mt-1 ml-0 text-[10px] text-text-secondary/70 bg-bg-tertiary/30 p-2 rounded-md overflow-x-auto whitespace-pre-wrap font-mono">
+          {showPreview ? preview + "..." : content}
         </pre>
       )}
     </div>
