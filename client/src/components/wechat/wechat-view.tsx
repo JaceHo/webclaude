@@ -1,13 +1,22 @@
 import { ExternalLink, RefreshCw } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 const WECHAT_URL = "https://wx.qq.com/";
 
 export function WeChatView() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [key, setKey] = useState(0);
 
-  const handleRefresh = () => setKey((k) => k + 1);
+  // Soft-reload: tells the iframe's own window to refresh, preserving all
+  // WeChat session cookies. Never use key changes — that destroys the DOM node
+  // and kills the session exactly like closing the tab.
+  const handleRefresh = () => {
+    try {
+      iframeRef.current?.contentWindow?.location.reload();
+    } catch {
+      // Cross-origin guard fired (shouldn't happen for wx.qq.com, but be safe)
+      iframeRef.current?.setAttribute("src", WECHAT_URL);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-bg-primary">
@@ -19,7 +28,7 @@ export function WeChatView() {
         <button
           onClick={handleRefresh}
           className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
-          title="Reload"
+          title="Reload (preserves login)"
         >
           <RefreshCw size={14} />
         </button>
@@ -34,28 +43,16 @@ export function WeChatView() {
         </a>
       </header>
 
-      {/* Iframe */}
+      {/* Iframe — no sandbox so WeChat CDN cookies (avatars, etc.) work fully */}
       <div className="flex-1 relative min-h-0">
         <iframe
-          key={key}
           ref={iframeRef}
           src={WECHAT_URL}
           className="w-full h-full border-0"
           title="WeChat Web"
-          allow="clipboard-read; clipboard-write; microphone; camera"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads"
+          allow="clipboard-read; clipboard-write; microphone; camera; storage-access"
+          referrerPolicy="no-referrer-when-downgrade"
         />
-        {/* Overlay hint — shown only if iframe fails to render (X-Frame-Options) */}
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center gap-4 pointer-events-none"
-          style={{ display: "none" }}
-          id="wechat-blocked-hint"
-        >
-          <p className="text-sm text-text-muted text-center">
-            WeChat Web blocks embedding via X-Frame-Options.<br />
-            Use the <strong>Open in Browser</strong> button above instead.
-          </p>
-        </div>
       </div>
     </div>
   );

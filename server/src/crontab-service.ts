@@ -14,11 +14,15 @@ export interface SystemCrontabEntry {
   rawLine: string;    // original unparsed line
 }
 
-/** Run `crontab -l` and return the full text (empty string if none). */
+/** Run `crontab -l` and return the full text (empty string if none/error). */
 async function readRaw(): Promise<string> {
   try {
     const proc = Bun.spawn(["crontab", "-l"], { stdout: "pipe", stderr: "pipe" });
-    const text = await new Response(proc.stdout).text();
+    // Consume both stdout and stderr concurrently to prevent pipe-buffer hangs
+    const [text] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(), // discard stderr ("no crontab for user" etc.)
+    ]);
     await proc.exited;
     return text;
   } catch {
@@ -28,12 +32,19 @@ async function readRaw(): Promise<string> {
 
 /** Write a full crontab text via `crontab -`. */
 async function writeRaw(content: string): Promise<void> {
+  // Pass content as a string directly — Bun.spawn accepts string stdin natively.
   const proc = Bun.spawn(["crontab", "-"], {
-    stdin: new TextEncoder().encode(content),
+    stdin: content,
     stdout: "pipe",
     stderr: "pipe",
   });
-  await proc.exited;
+  const [exit, stderr] = await Promise.all([
+    proc.exited,
+    new Response(proc.stderr).text(),
+  ]);
+  if (exit !== 0) {
+    throw new Error(`crontab write failed (exit ${exit}): ${stderr.trim()}`);
+  }
 }
 
 /**
