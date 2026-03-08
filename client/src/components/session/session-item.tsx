@@ -51,21 +51,23 @@ export function SessionItem({
       )}
 
       <div className="flex-1 min-w-0">
-        <div className="text-sm truncate">{truncate(session.title, 30)}</div>
-        <div className="flex items-center gap-2 text-xs text-text-muted mt-0.5">
+        <div className="flex items-baseline justify-between gap-1">
+          <div className="text-sm truncate font-medium">
+            {isFeishu ? truncate(session.title, 22) : (session.cwd.split("/").pop() || session.cwd)}
+          </div>
+          <span className="text-[10px] text-text-muted flex-shrink-0">
+            {formatTime(session.lastActivity)}
+          </span>
+        </div>
+        <div className="text-xs text-text-muted mt-0.5 truncate">
           {isFeishu ? (
-            <>
-              <span className="text-[#00B2B2]">Feishu DM</span>
-              {session.feishuDmInfo?.autoReply && (
-                <span title="Auto-reply enabled" className="text-[10px] opacity-60">
-                  auto
-                </span>
-              )}
-            </>
+            <span className="text-[#00B2B2]">
+              Feishu DM
+              {session.feishuDmInfo?.autoReply && <span className="opacity-60 ml-1">auto</span>}
+            </span>
           ) : (
-            <span>{session.model.replace("claude-", "").split("-")[0]}</span>
+            <span title={session.title}>{truncate(session.title, 32)}</span>
           )}
-          <span>{formatTime(session.lastActivity)}</span>
         </div>
       </div>
 
