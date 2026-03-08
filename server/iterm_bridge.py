@@ -3,7 +3,7 @@
 # dependencies = ["iterm2", "fastapi", "uvicorn[standard]"]
 # ///
 """
-iTerm2 Bridge — internal subprocess for webclaude
+iTerm2 Bridge — internal subprocess for ctrlnect
 Binds to 127.0.0.1:$PORT (default 8765), no auth (internal use only).
 
 Endpoints:
@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI):
     await _close()
 
 
-bridge = FastAPI(title="webclaude iTerm2 Bridge", lifespan=lifespan)
+bridge = FastAPI(title="CtrlNect iTerm2 Bridge", lifespan=lifespan)
 bridge.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
