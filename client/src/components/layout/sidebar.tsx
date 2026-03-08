@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { Session, CreateSessionRequest, CronJob, CreateCronRequest, UpdateCronRequest } from "@ctrlnect/shared";
 import { SessionList } from "../session/session-list";
@@ -39,6 +39,7 @@ interface SidebarProps {
   onSelectItermSession: (id: string) => void;
   wechatActive: boolean;
   onSelectWeChat: () => void;
+  onRefreshAll: () => void;
 }
 
 const BOTTOM_HEIGHT_KEY = "ctrlnect_bottom_panel_height";
@@ -84,7 +85,15 @@ export function Sidebar({
   onSelectItermSession,
   wechatActive,
   onSelectWeChat,
+  onRefreshAll,
 }: SidebarProps) {
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefreshAll = () => {
+    setRefreshing(true);
+    onRefreshAll();
+    setTimeout(() => setRefreshing(false), 800);
+  };
   const containerRef = useRef<HTMLDivElement>(null);
   const [bottomHeight, setBottomHeight] = useState(getStoredHeight);
 
@@ -191,8 +200,15 @@ export function Sidebar({
             onGetLogs={onGetServiceLogs}
             onDiscover={onDiscoverServices}
           />
-          <div className="p-2.5 border-t border-border text-[11px] text-text-muted text-center font-light tracking-wide">
-            CtrlNect
+          <div className="px-3 py-2 border-t border-border flex items-center justify-between">
+            <span className="text-[11px] text-text-muted font-light tracking-wide">CtrlNect</span>
+            <button
+              onClick={handleRefreshAll}
+              title="Refresh all — iTerm2, crons, services from disk"
+              className="p-1 rounded text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
+            >
+              <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
+            </button>
           </div>
         </div>
       </div>

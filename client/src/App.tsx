@@ -21,9 +21,9 @@ const tabId = (type: TabType, itemId: string) => `${type}:${itemId}`;
 
 function AppInner() {
   const { sessions, loading, createSession, updateSession, deleteSession } = useSessions();
-  const { crons, createCron, updateCron, deleteCron, triggerCron, importSystemCrons } = useCrons();
-  const { services, createService, updateService, toggleServiceEnabled, deleteService, startService, stopService, restartService, getServiceLogs, discoverServices } = useServices();
-  const { sessions: itermSessions, available: itermAvailable, getContent: getItermContent, sendText: sendItermText } = useIterm();
+  const { crons, createCron, updateCron, deleteCron, triggerCron, importSystemCrons, refreshCrons } = useCrons();
+  const { services, createService, updateService, toggleServiceEnabled, deleteService, startService, stopService, restartService, getServiceLogs, discoverServices, refreshServices } = useServices();
+  const { sessions: itermSessions, available: itermAvailable, fetchSessions: refreshItermSessions, getContent: getItermContent, sendText: sendItermText } = useIterm();
 
   // ── Tab state ──────────────────────────────────────────────────────────────
   const [tabs, setTabs] = useState<AppTab[]>([]);
@@ -155,6 +155,7 @@ function AppInner() {
           onSelectItermSession={handleSelectItermSession}
           wechatActive={wechatActive}
           onSelectWeChat={handleSelectWeChat}
+          onRefreshAll={() => { refreshCrons(); refreshServices(true); refreshItermSessions(true); }}
         />
       }
     >
