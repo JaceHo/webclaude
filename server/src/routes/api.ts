@@ -189,6 +189,8 @@ export function createApiRoutes(
       const commandCrons = cronStore.getAll().filter((c) => c.type === "command");
       await syncCommandCrons(commandCrons).catch((e) => console.warn("[crontab] sync failed:", e));
     }
+    // Broadcast updated list so all connected clients drop the deleted entry immediately
+    connectionManager.broadcastAll({ type: "cron_list", crons: cronStore.getAll() });
     return c.json({ ok: true });
   });
 

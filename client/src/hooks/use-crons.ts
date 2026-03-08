@@ -57,9 +57,13 @@ export function useCrons() {
   }, []);
 
   const deleteCron = useCallback(async (id: string) => {
-    await fetch(`/api/crons/${id}`, { method: "DELETE" });
-    setCrons((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+    const res = await fetch(`/api/crons/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      // Optimistic update + force re-fetch to confirm server state
+      setCrons((prev) => prev.filter((c) => c.id !== id));
+      fetchCrons();
+    }
+  }, [fetchCrons]);
 
   const triggerCron = useCallback(async (id: string) => {
     await fetch(`/api/crons/${id}/trigger`, { method: "POST" });
@@ -77,5 +81,5 @@ export function useCrons() {
     return { imported: result.imported };
   }, []);
 
-  return { crons, createCron, updateCron, deleteCron, triggerCron, importSystemCrons };
+  return { crons, createCron, updateCron, deleteCron, triggerCron, importSystemCrons, refreshCrons: fetchCrons };
 }
