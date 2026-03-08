@@ -32,12 +32,13 @@ async function readRaw(): Promise<string> {
 
 /** Write a full crontab text via `crontab -`. */
 async function writeRaw(content: string): Promise<void> {
-  // Pass content as a string directly — Bun.spawn accepts string stdin natively.
   const proc = Bun.spawn(["crontab", "-"], {
-    stdin: content,
+    stdin: "pipe",
     stdout: "pipe",
     stderr: "pipe",
   });
+  proc.stdin!.write(content);
+  proc.stdin!.end();
   const [exit, stderr] = await Promise.all([
     proc.exited,
     new Response(proc.stderr).text(),
