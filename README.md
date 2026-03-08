@@ -62,6 +62,8 @@ Open **http://localhost:5173** — create a session and start chatting.
 
 Create, switch between, and manage multiple concurrent Claude agent sessions. Each session maintains its own conversation history, working directory, and model selection. Sessions persist across server restarts.
 
+> **Shared agent memory across sessions:** Use [AgentMem](https://github.com/JaceHo/AgentMem) — a persistent, cross-session memory layer that lets your agents remember context, decisions, and knowledge across different sessions and restarts.
+
 ### Full Agentic Toolset + Sub-agent Management
 
 Every session has access to the complete Claude Code toolset. The `Agent` tool spawns parallel sub-agents — CtrlNect streams their events to the UI in real time so you can observe every sub-task as it executes.
