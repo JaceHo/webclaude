@@ -19,6 +19,11 @@ import { FeishuBridge } from "./feishu/feishu-bridge.js";
 import { CronStore } from "./cron-store.js";
 import { CronScheduler } from "./cron-scheduler.js";
 import { ServiceStore } from "./service-store.js";
+import { startItermBridge, stopItermBridge } from "./iterm-bridge.js";
+import { readImportableEntries, syncCommandCrons } from "./crontab-service.js";
+
+// ── iTerm2 bridge — start before anything else ─────────────────────────────
+startItermBridge().catch((e) => console.warn("[iTerm Bridge] Failed to start:", e));
 
 const sessionStore = new SessionStore();
 const connectionManager = new ConnectionManager();
@@ -73,6 +78,28 @@ cronScheduler.setTriggerHandler(async (cron) => {
   await wsHandler.handleChat(cron.sessionId, cron.prompt);
 });
 cronScheduler.start();
+
+// Auto-import new system crontab entries on every startup (idempotent — skips
+// any entry whose command already exists as a command-type cron).
+(async () => {
+  try {
+    const entries = await readImportableEntries();
+    const existing = cronStore.getAll();
+    let imported = 0;
+    for (const entry of entries) {
+      if (existing.find((c) => c.type === "command" && c.prompt === entry.command)) continue;
+      const name = entry.command.split(" ").pop()?.split("/").pop() ?? entry.command.slice(0, 30);
+      const cron = cronStore.create({ type: "command", sessionId: "", name, schedule: entry.schedule, prompt: entry.command, enabled: true });
+      cronScheduler.refreshNextRun(cron.id);
+      imported++;
+    }
+    if (imported > 0) {
+      console.log(`[CronScheduler] Auto-imported ${imported} new system crontab entries`);
+      const commandCrons = cronStore.getAll().filter((c) => c.type === "command");
+      await syncCommandCrons(commandCrons).catch(() => {});
+    }
+  } catch { /* crontab not available, ignore */ }
+})();
 
 // Wire cron_trigger WS messages to scheduler
 wsHandler.setCronTriggerHandler((cronId) => {
@@ -144,6 +171,7 @@ process.on("unhandledRejection", (reason) => {
 
 // Graceful shutdown
 process.on("SIGINT", async () => {
+  stopItermBridge();
   cronScheduler.stop();
   feishuBridge?.stop();
   await agentRunner.closeAll();

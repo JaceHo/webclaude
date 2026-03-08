@@ -42,6 +42,8 @@ interface FeishuState {
   processedIds: Record<string, string[]>;
   /** sessionId → Unix ms timestamp of last seen message. */
   lastSeenAt: Record<string, number>;
+  /** Cached bot open_id — avoids an API call on every restart. */
+  botOpenId?: string;
 }
 
 function loadState(): FeishuState {
@@ -102,12 +104,22 @@ export class FeishuBridge {
   async initialize(): Promise<void> {
     this.state = loadState();
 
-    try {
-      this.botOpenId = await this.client.getBotOpenId();
-      console.log("[FeishuBridge] Authenticated as bot:", this.botOpenId);
-    } catch (err) {
-      console.error("[FeishuBridge] Failed to fetch bot identity:", err);
-      return;
+    // Use cached bot open_id from state if available — avoids an API round-trip
+    // on every restart and prevents hangs caused by stale TCP connections.
+    if (this.state.botOpenId) {
+      this.botOpenId = this.state.botOpenId;
+      console.log("[FeishuBridge] Using cached bot open_id:", this.botOpenId);
+    } else {
+      try {
+        this.botOpenId = await this.client.getBotOpenId();
+        console.log("[FeishuBridge] Authenticated as bot:", this.botOpenId);
+        // Persist so future restarts skip this call
+        this.state.botOpenId = this.botOpenId;
+        scheduleSaveState(this.state);
+      } catch (err) {
+        console.error("[FeishuBridge] Failed to fetch bot identity:", err);
+        return;
+      }
     }
 
     // If no specific sessions configured, fetch all bot chats
@@ -178,10 +190,50 @@ export class FeishuBridge {
 
     this.sessionMap.set(sessionId, chatId);
 
+    // Load message history on first bootstrap (no persisted messages yet)
+    if (chatId !== "placeholder") {
+      const existing_msgs = this.messageStore.getAll(sessionId);
+      if (existing_msgs.length === 0) {
+        console.log(`[FeishuBridge] Loading message history for ${name}...`);
+        await this.loadHistory(sessionId, chatId, Date.now() - 30 * 24 * 60 * 60 * 1000, Date.now());
+      }
+    }
+
     // Broadcast
     const session = this.sessionStore.get(sessionId);
     if (session) {
       this.connectionManager.broadcastAll({ type: "session_update", session });
+    }
+  }
+
+  /**
+   * Public: fetch messages from Feishu for a session older than `beforeMs`
+   * and store them in the message store. Used by the "Load more" API endpoint.
+   */
+  async loadHistoryBefore(sessionId: string, beforeMs: number): Promise<void> {
+    const chatId = this.sessionMap.get(sessionId);
+    if (!chatId || chatId === "placeholder") return;
+    const startMs = beforeMs - 7 * 24 * 60 * 60 * 1000;
+    await this.loadHistory(sessionId, chatId, startMs, beforeMs);
+  }
+
+  private async loadHistory(sessionId: string, chatId: string, startMs: number, endMs: number): Promise<void> {
+    try {
+      const messages = await this.client.getMessageHistory(chatId, startMs, endMs);
+      for (const msg of messages) {
+        const role = msg.senderId === this.botOpenId ? "assistant" : "user";
+        const persisted: PersistedMessage = {
+          id: msg.messageId,
+          role,
+          blocks: [{ type: "text", text: msg.text }],
+          parentToolUseId: null,
+          timestamp: new Date(msg.createdAt).toISOString(),
+        };
+        this.messageStore.append(sessionId, persisted);
+      }
+      console.log(`[FeishuBridge] Stored ${messages.length} historical messages for session ${sessionId}`);
+    } catch (err) {
+      console.warn(`[FeishuBridge] Failed to load history for session ${sessionId}:`, err);
     }
   }
 
@@ -235,25 +287,33 @@ export class FeishuBridge {
       return;
     }
 
-    // Resolve chat_id
+    // Resolve chat_id — prefer using the cached chatId from a persisted session
+    // with this open_id, to avoid creating a new chat on every restart.
     let chatId = cfg.chat_id ?? "";
     if (!chatId && cfg.open_id) {
-      try {
-        chatId = await this.client.resolveP2PChatId(cfg.open_id);
-        console.log(`[FeishuBridge] Resolved chat_id for ${cfg.name}: ${chatId}`);
-      } catch (err) {
-        console.error(`[FeishuBridge] Could not resolve chat_id for ${cfg.name}:`, err);
-        return;
+      // Check persisted sessions by open_id first (avoids an API call + prevents duplicates)
+      const byOpenId = this.sessionStore.getAll().find(
+        (s) => s.feishuDmInfo?.openId === cfg.open_id && s.feishuDmInfo?.chatId && s.feishuDmInfo.chatId !== "placeholder",
+      );
+      if (byOpenId) {
+        chatId = byOpenId.feishuDmInfo!.chatId;
+        console.log(`[FeishuBridge] Using cached chat_id for ${cfg.name}: ${chatId}`);
+      } else {
+        try {
+          chatId = await this.client.resolveP2PChatId(cfg.open_id);
+          console.log(`[FeishuBridge] Resolved chat_id for ${cfg.name}: ${chatId}`);
+        } catch (err) {
+          console.error(`[FeishuBridge] Could not resolve chat_id for ${cfg.name}:`, err);
+          return;
+        }
       }
     }
 
-    // Find an existing webclaude session already linked to this chatId by
-    // iterating the in-memory Map directly (avoids getAll's sort+alloc).
+    // Find an existing webclaude session already linked to this chatId
     let existingSessionId: string | undefined;
     for (const [sid, cid] of this.sessionMap) {
       if (cid === chatId) { existingSessionId = sid; break; }
     }
-    // Also check persisted sessions that survived a restart
     if (!existingSessionId) {
       for (const s of this.sessionStore.getAll()) {
         if (s.feishuDmInfo?.chatId === chatId) { existingSessionId = s.id; break; }
@@ -314,9 +374,17 @@ export class FeishuBridge {
       for (const [sessionId, chatId] of this.sessionMap) {
         // Skip placeholder sessions
         if (chatId === "placeholder") continue;
-        this.pollSession(sessionId, chatId).catch((err) =>
-          console.error(`[FeishuBridge] Poll error for session ${sessionId}:`, err),
-        );
+        this.pollSession(sessionId, chatId).catch((err) => {
+          // AbortError = our own 15s fetchWithTimeout firing; ignore it silently
+          if (err?.name === "AbortError" || err?.code === 20) return;
+          // Self-signed cert / TLS errors: log concisely, not as full objects
+          const msg = err?.message ?? String(err);
+          if (msg.includes("SELF_SIGNED") || msg.includes("certificate") || msg.includes("cert")) {
+            console.warn(`[FeishuBridge] Poll TLS error for ${sessionId}: ${msg}`);
+            return;
+          }
+          console.error(`[FeishuBridge] Poll error for session ${sessionId}:`, msg);
+        });
       }
     }, this.pollIntervalMs);
   }

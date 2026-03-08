@@ -70,14 +70,32 @@ export class FeishuClient {
     private readonly appSecret: string,
   ) {}
 
+  /** Wrapper that aborts the fetch after `timeoutMs` (default 15 s). */
+  private async fetchWithTimeout(
+    url: string,
+    init?: RequestInit,
+    timeoutMs = 15_000,
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   // ── Auth ────────────────────────────────────────────────────────────────────
 
   private async fetchToken(): Promise<void> {
-    const res = await fetch(`${BASE}/auth/v3/tenant_access_token/internal`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ app_id: this.appId, app_secret: this.appSecret }),
-    });
+    const res = await this.fetchWithTimeout(
+      `${BASE}/auth/v3/tenant_access_token/internal`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ app_id: this.appId, app_secret: this.appSecret }),
+      },
+    );
     const data = (await res.json()) as TenantTokenResponse;
     if (data.code !== 0) {
       throw new Error(
@@ -115,12 +133,12 @@ export class FeishuClient {
    */
   async resolveP2PChatId(openId: string): Promise<string> {
     const headers = await this.authHeaders();
-    const res = await fetch(
+    const res = await this.fetchWithTimeout(
       `${BASE}/im/v1/chats?user_id_type=open_id`,
       {
         method: "POST",
         headers,
-        body: JSON.stringify({ user_id_list: [openId] }),
+        body: JSON.stringify({ user_id_list: [openId], chat_mode: "p2p" }),
       },
     );
     const data = (await res.json()) as ApiResponse<{ chat_id: string }>;
@@ -158,7 +176,7 @@ export class FeishuClient {
       `&sort_type=ByCreateTimeAsc` +
       `&page_size=50`;
 
-    const res = await fetch(url, { headers });
+    const res = await this.fetchWithTimeout(url, { headers });
     const data = (await res.json()) as ApiResponse<{
       items?: FeishuRawMessage[];
     }>;
@@ -224,7 +242,7 @@ export class FeishuClient {
    */
   async sendTextMessage(chatId: string, text: string): Promise<string> {
     const headers = await this.authHeaders();
-    const res = await fetch(
+    const res = await this.fetchWithTimeout(
       `${BASE}/im/v1/messages?receive_id_type=chat_id`,
       {
         method: "POST",
@@ -250,7 +268,7 @@ export class FeishuClient {
   /** Returns the bot's own open_id (used to filter out bot's own messages). */
   async getBotOpenId(): Promise<string> {
     const headers = await this.authHeaders();
-    const res = await fetch(`${BASE}/bot/v3/info`, { headers });
+    const res = await this.fetchWithTimeout(`${BASE}/bot/v3/info`, { headers });
     const raw = await res.json();
     // Response is { code, msg, bot: { open_id, ... } } - no data wrapper!
     if (raw.code !== 0) {
@@ -261,6 +279,57 @@ export class FeishuClient {
     const openId = raw.bot?.open_id ?? "";
     console.log("[Feishu] Bot open_id:", openId);
     return openId;
+  }
+
+  /**
+   * Fetch ALL messages in a time range with pagination (for history loading).
+   * Returns messages in ascending creation order.
+   */
+  async getMessageHistory(
+    chatId: string,
+    startMs: number,
+    endMs: number,
+  ): Promise<FeishuMessage[]> {
+    const headers = await this.authHeaders();
+    const startTime = Math.floor(startMs / 1000);
+    const endTime = Math.floor(endMs / 1000);
+    const all: FeishuMessage[] = [];
+    let pageToken = "";
+
+    do {
+      let url =
+        `${BASE}/im/v1/messages` +
+        `?container_id_type=chat` +
+        `&container_id=${encodeURIComponent(chatId)}` +
+        `&start_time=${startTime}` +
+        `&end_time=${endTime}` +
+        `&sort_type=ByCreateTimeAsc` +
+        `&page_size=50`;
+      if (pageToken) url += `&page_token=${pageToken}`;
+
+      const res = await this.fetchWithTimeout(url, { headers });
+      const data = (await res.json()) as ApiResponse<{
+        items?: FeishuRawMessage[];
+        page_token?: string;
+        has_more?: boolean;
+      }>;
+
+      if (data.code !== 0) {
+        throw new Error(
+          `[Feishu] getMessageHistory failed: code=${data.code} msg=${data.msg ?? ""}`,
+        );
+      }
+
+      all.push(
+        ...(data.data?.items ?? [])
+          .filter((m) => !m.deleted)
+          .map((m) => this.parseMessage(m, chatId)),
+      );
+
+      pageToken = data.data?.has_more ? (data.data.page_token ?? "") : "";
+    } while (pageToken);
+
+    return all;
   }
 
   /** Get all P2P chats the bot is in (for receiving DMs). */
@@ -275,7 +344,7 @@ export class FeishuClient {
         url += `&page_token=${pageToken}`;
       }
 
-      const res = await fetch(url, { headers });
+      const res = await this.fetchWithTimeout(url, { headers });
       const data = (await res.json()) as ApiResponse<{
         items?: Array<{ chat_id: string; name: string }>;
         page_token?: string;
