@@ -79,8 +79,8 @@ cronScheduler.setTriggerHandler(async (cron) => {
 });
 cronScheduler.start();
 
-// Auto-import new system crontab entries on every startup (idempotent — skips
-// any entry whose command already exists as a command-type cron).
+// On startup: auto-import new system crontab entries, then always sync back to
+// remove any orphaned # ctrlnect: entries whose crons were deleted from the store.
 (async () => {
   try {
     const entries = await readImportableEntries();
@@ -95,9 +95,13 @@ cronScheduler.start();
     }
     if (imported > 0) {
       console.log(`[CronScheduler] Auto-imported ${imported} new system crontab entries`);
-      const commandCrons = cronStore.getAll().filter((c) => c.type === "command");
-      await syncCommandCrons(commandCrons).catch(() => {});
     }
+    // Always sync — removes orphaned ctrlnect-tagged entries whose crons no
+    // longer exist in the store (e.g. deleted while writeRaw was broken).
+    const commandCrons = cronStore.getAll().filter((c) => c.type === "command");
+    await syncCommandCrons(commandCrons).catch((e) =>
+      console.warn("[CronScheduler] Startup crontab sync failed:", e.message),
+    );
   } catch { /* crontab not available, ignore */ }
 })();
 
